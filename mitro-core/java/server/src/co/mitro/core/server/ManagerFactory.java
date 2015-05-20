@@ -167,10 +167,14 @@ public class ManagerFactory implements LifeCycle.Listener {
   }
 
   private JdbcConnectionSource getNewConnectionSource() {
-      if(this.databaseUser.length() > 0) {
-          return new JdbcConnectionSource(this.databaseUrl, this.databaseUser, this.databasePassword);
-      } else {
-          return new JdbcConnectionSource(this.databaseUrl);
+      try {
+          if (this.databaseUser.length() > 0) {
+              return new JdbcConnectionSource(this.databaseUrl, this.databaseUser, this.databasePassword);
+          } else {
+              return new JdbcConnectionSource(this.databaseUrl);
+          }
+      } catch(SQLException e) {
+          logger.error('Error creating DB Conection: '+e.getMessage(), e);
       }
   }
 
