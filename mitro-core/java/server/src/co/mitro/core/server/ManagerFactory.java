@@ -114,6 +114,8 @@ public class ManagerFactory implements LifeCycle.Listener {
   }
 
   private final String databaseUrl;
+  private final String databaseUser;
+  private final String databasePassword;
   private final ManagerPool pool;
   private final long pollMs;
   private final ConnectionMode mode;
@@ -164,7 +166,7 @@ public class ManagerFactory implements LifeCycle.Listener {
     return System.getProperty("database_password", "");
   }
 
-  private static JdbcConnectionSource getNewConnectionSource() {
+  private JdbcConnectionSource getNewConnectionSource() {
       if(this.databaseUser.length() > 0) {
           return new JdbcConnectionSource(this.databaseUrl, this.databaseUser, this.databasePassword);
       } else {
