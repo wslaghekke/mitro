@@ -110,7 +110,7 @@ public class ManagerFactory implements LifeCycle.Listener {
   // For testing; remove this! It is thread unsafe
   public static void unsafeRecreateSingleton(ConnectionMode mode) {
 	  INSTANCE = new ManagerFactory(ManagerFactory.DATABASE_URL, new Manager.Pool(),
-	      IDLE_TXN_POLL_SECONDS, TimeUnit.SECONDS, mode);
+	      IDLE_TXN_POLL_SECONDS, TimeUnit.SECONDS, mode, getUserName(), getPassword());
   }
 
   private final String databaseUrl;
@@ -134,7 +134,7 @@ public class ManagerFactory implements LifeCycle.Listener {
    * @param optional databaseUser
    * @param optional databasePassword
    */
-  public ManagerFactory(String databaseUrl, ManagerPool pool, long pollPeriod, TimeUnit unit, ConnectionMode mode, String databaseUser = "", String databasePassword = "") {
+  public ManagerFactory(String databaseUrl, ManagerPool pool, long pollPeriod, TimeUnit unit, ConnectionMode mode, String databaseUser, String databasePassword) {
     this.databaseUrl = databaseUrl;
     this.databaseUser = databaseUser;
     this.databasePassword = databasePassword;

@@ -52,7 +52,7 @@ public class DumpStateMain {
     }
 
     ManagerFactory managerFactory = new ManagerFactory(databaseUrl, new Manager.Pool(),
-        ManagerFactory.IDLE_TXN_POLL_SECONDS, TimeUnit.SECONDS, ConnectionMode.READ_WRITE);
+        ManagerFactory.IDLE_TXN_POLL_SECONDS, TimeUnit.SECONDS, ConnectionMode.READ_WRITE, "", "");
     try (Manager manager = managerFactory.newManager()) {
       StatsGenerator.generateStatistics(outDir, manager);
     }
