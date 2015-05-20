@@ -174,7 +174,7 @@ public class ManagerFactory implements LifeCycle.Listener {
               return new JdbcConnectionSource(this.databaseUrl);
           }
       } catch(SQLException e) {
-          logger.error('Error creating DB Conection: '+e.getMessage(), e);
+          logger.error("Error creating DB Conection: "+e.getMessage(), e);
       }
   }
 
