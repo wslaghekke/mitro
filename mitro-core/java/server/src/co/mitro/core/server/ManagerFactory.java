@@ -18,7 +18,7 @@
  *
  *     You should have received a copy of the GNU General Public License
  *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *     
+ *
  *     You can contact the authors at inbound@mitro.co.
  *******************************************************************************/
 package co.mitro.core.server;
@@ -49,7 +49,7 @@ public class ManagerFactory implements LifeCycle.Listener {
   public static final long IDLE_TXN_POLL_SECONDS = 60;
   private static final int NUMBER_THREADS = 1;
 
-  private final ExecutorService logProcessor = 
+  private final ExecutorService logProcessor =
       Executors.newFixedThreadPool(NUMBER_THREADS, new DaemonThreadFactory());
 
   /** Creates daemon threads so the Exector does not stop application shutdown. */
@@ -82,14 +82,14 @@ public class ManagerFactory implements LifeCycle.Listener {
         logger.error("unknown error processing logs", e);
       }
     }
-    
+
   }
-  
+
   // TODO: this may not need to be synchronized.
   public synchronized void transactionComplete(String txnId) {
     logProcessor.execute(new BackgroundAuditProcessor(txnId));
   }
-  
+
   // TODO: Remove this; Inject ManagerFactory everywhere instead
   public static String DATABASE_URL = "jdbc:postgresql://localhost:5432/mitro";
 
@@ -131,9 +131,13 @@ public class ManagerFactory implements LifeCycle.Listener {
    * @param pollPeriod time that the pool will be checked for expired connections.
    * @param unit time unit for pollPeriod.
    * @param mode determines if the Manager can be used for writes or not.
+   * @param optional databaseUser
+   * @param optional databasePassword
    */
-  public ManagerFactory(String databaseUrl, ManagerPool pool, long pollPeriod, TimeUnit unit, ConnectionMode mode) {
+  public ManagerFactory(String databaseUrl, ManagerPool pool, long pollPeriod, TimeUnit unit, ConnectionMode mode, String databaseUser = "", String databasePassword = "") {
     this.databaseUrl = databaseUrl;
+    this.databaseUser = databaseUser;
+    this.databasePassword = databasePassword;
     this.pool = pool;
     this.pollMs = unit.toMillis(pollPeriod);
     this.mode = mode;
@@ -145,16 +149,32 @@ public class ManagerFactory implements LifeCycle.Listener {
    */
   public ManagerFactory() {
     this(getDatabaseUrl(), new Manager.Pool(), IDLE_TXN_POLL_SECONDS, TimeUnit.SECONDS,
-        ConnectionMode.READ_WRITE);
+        ConnectionMode.READ_WRITE, getUserName(), getPassword());
   }
 
   private static String getDatabaseUrl(){
     return System.getProperty("database_url", ManagerFactory.DATABASE_URL);
   }
 
+  private static String getUserName(){
+    return System.getProperty("database_user", "");
+  }
+
+  private static String getPassword() {
+    return System.getProperty("database_password", "");
+  }
+
+  private static JdbcConnectionSource getNewConnectionSource() {
+      if(this.databaseUser.length() > 0) {
+          return new JdbcConnectionSource(this.databaseUrl, this.databaseUser, this.databasePassword);
+      } else {
+          return new JdbcConnectionSource(this.databaseUrl);
+      }
+  }
+
   private void tryCreateTables() {
     try {
-      JdbcConnectionSource connectionSource = new JdbcConnectionSource(databaseUrl);
+      JdbcConnectionSource connectionSource = this.getNewConnectionSource();
       try {
         Manager.createTablesIfNotExists(connectionSource);
       } finally {
@@ -175,9 +195,9 @@ public class ManagerFactory implements LifeCycle.Listener {
    */
   public Manager newManager() throws SQLException {
     // TODO: Use a different DB for the auditConnection?
-    JdbcConnectionSource connection = new JdbcConnectionSource(databaseUrl);
+    JdbcConnectionSource connection = getNewConnectionSource();
     // we use a separate connection so it is a different transaction
-    JdbcConnectionSource auditConnection = new JdbcConnectionSource(databaseUrl);
+    JdbcConnectionSource auditConnection = getNewConnectionSource();
 
     // TODO: support creating unpooled connections?
     Manager m = new Manager(pool, connection, auditConnection, mode);
